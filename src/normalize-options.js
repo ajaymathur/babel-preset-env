@@ -27,7 +27,9 @@ export const validateIncludesAndExcludes = (
 
   invariant(
     unknownOpts.length === 0,
-    `Invalid Option: The plugins/built-ins '${unknownOpts.join(", ")}' passed to the '${type}' option are not
+    `Invalid Option: The plugins/built-ins '${unknownOpts.join(
+      ", ",
+    )}' passed to the '${type}' option are not
     valid. Please check data/[plugin-features|built-in-features].js in babel-preset-env`,
   );
 
@@ -50,7 +52,9 @@ export const checkDuplicateIncludeExcludes = (
 
   invariant(
     duplicates.length === 0,
-    `Invalid Option: The plugins/built-ins '${duplicates.join(", ")}' were found in both the "include" and
+    `Invalid Option: The plugins/built-ins '${duplicates.join(
+      ", ",
+    )}' were found in both the "include" and
     "exclude" options.`,
   );
 };
@@ -70,15 +74,6 @@ export const validateBoolOption = (
 
   return value;
 };
-
-export const validateLooseOption = (looseOpt: boolean) =>
-  validateBoolOption("loose", looseOpt, false);
-
-export const validateSpecOption = (specOpt: boolean) =>
-  validateBoolOption("spec", specOpt, false);
-
-export const validateForceAllTransformsOption = (forceAllTransforms: boolean) =>
-  validateBoolOption("forceAllTransforms", forceAllTransforms, false);
 
 export const validateModulesOption = (
   modulesOpt: ModuleOption = "commonjs",
@@ -121,13 +116,16 @@ export default function normalizeOptions(opts: Options) {
   return {
     debug: opts.debug,
     exclude: validateIncludesAndExcludes(opts.exclude, "exclude"),
-    forceAllTransforms: validateForceAllTransformsOption(
+    forceAllTransforms: validateBoolOption(
+      "forceAllTransforms",
       opts.forceAllTransforms,
+      false,
     ),
     include: validateIncludesAndExcludes(opts.include, "include"),
-    loose: validateLooseOption(opts.loose),
+    loose: validateBoolOption("loose", opts.loose, false),
     modules: validateModulesOption(opts.modules),
-    spec: validateSpecOption(opts.spec),
+    spec: validateBoolOption("loose", opts.spec, false),
+    stage3: validateBoolOption("stage3", opts.stage3, false),
     targets: opts.targets,
     useBuiltIns: validateUseBuiltInsOption(opts.useBuiltIns),
   };

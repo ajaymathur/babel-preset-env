@@ -126,5 +126,22 @@ module.exports = {
     features: [
       "trailing commas in function syntax",
     ],
-  }
+  },
+
+  // stage 3
+  "transform-async-generator-functions": {
+    features: [
+      "Asynchronous Iterators",
+    ],
+  },
+  "transform-object-rest-spread": {
+    features: [
+      "object rest/spread properties",
+    ],
+  },
+  "transform-unicode-property-regex": {
+    features: [
+      "RegExp Unicode Property Escapes",
+    ],
+  },
 };

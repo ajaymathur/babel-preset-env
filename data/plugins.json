@@ -228,5 +228,12 @@
     "ios": "10",
     "opera": "45",
     "electron": "1.7"
-  }
+  },
+  "transform-async-generator-functions": {},
+  "transform-object-rest-spread": {
+    "chrome": "60",
+    "firefox": "55",
+    "opera": "47"
+  },
+  "transform-unicode-property-regex": {}
 }

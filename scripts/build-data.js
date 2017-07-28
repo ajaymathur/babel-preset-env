@@ -9,8 +9,6 @@ const isEqual = require("lodash/isEqual");
 const mapValues = require("lodash/mapValues");
 const pickBy = require("lodash/pickBy");
 const electronToChromiumVersions = require("electron-to-chromium").versions;
-const pluginFeatures = require("../data/plugin-features");
-const builtInFeatures = require("../data/built-in-features");
 
 const electronToChromiumKeys = Object.keys(
   electronToChromiumVersions
@@ -54,11 +52,16 @@ const byTestSuite = suite => browser => {
     : true;
 };
 
-const es6 = require("compat-table/data-es6");
-es6.browsers = pickBy(envs, byTestSuite("es6"));
-
-const es2016plus = require("compat-table/data-es2016plus");
-es2016plus.browsers = pickBy(envs, byTestSuite("es2016plus"));
+const compatSources = [
+  "es6",
+  "es2016plus",
+  "esnext",
+].reduce((result, source) => {
+  const data = require(`compat-table/data-${source}`);
+  data.browsers = pickBy(envs, byTestSuite(source));
+  result.push(data);
+  return result;
+}, []);
 
 const interpolateAllResults = (rawBrowsers, tests) => {
   const interpolateResults = res => {
@@ -74,9 +77,8 @@ const interpolateAllResults = (rawBrowsers, tests) => {
       browser = rawBrowsers[bid];
       if (browser.equals && res[bid] === undefined) {
         result = res[browser.equals];
-        res[bid] = browser.ignore_flagged && result === "flagged"
-          ? false
-          : result;
+        res[bid] =
+          browser.ignore_flagged && result === "flagged" ? false : result;
         // For each browser, check if the previous browser has the same
         // browser full name (e.g. Firefox) or family name (e.g. Chakra) as this one.
       } else if (
@@ -112,8 +114,9 @@ const interpolateAllResults = (rawBrowsers, tests) => {
   });
 };
 
-interpolateAllResults(es6.browsers, es6.tests);
-interpolateAllResults(es2016plus.browsers, es2016plus.tests);
+compatSources.forEach(({ browsers, tests }) =>
+  interpolateAllResults(browsers, tests)
+);
 
 // End of compat-table code adaptation
 
@@ -131,7 +134,7 @@ const environments = [
 ];
 
 const compatibilityTests = flattenDeep(
-  [es6, es2016plus].map(data =>
+  compatSources.map(data =>
     data.tests.map(test => {
       return test.subtests
         ? [test, renameTests(test.subtests, name => test.name + " / " + name)]
@@ -246,36 +249,28 @@ const generateData = (environments, features) => {
   });
 };
 
-const pluginsDataPath = path.join(__dirname, "../data/plugins.json");
-const builtInsDataPath = path.join(__dirname, "../data/built-ins.json");
+const targets = ["plugin", "built-in"];
 
-const newPluginData = generateData(environments, pluginFeatures);
-const newBuiltInsData = generateData(environments, builtInFeatures);
+targets.forEach(target => {
+  const newData = generateData(
+    environments,
+    require(`../data/${target}-features`)
+  );
+  const dataPath = path.join(__dirname, `../data/${target}s.json`);
 
-if (process.argv[2] === "--check") {
-  const currentPluginData = require(pluginsDataPath);
-  const currentBuiltInsData = require(builtInsDataPath);
+  if (process.argv[2] === "--check") {
+    const currentData = require(dataPath);
 
-  if (
-    !isEqual(currentPluginData, newPluginData) ||
-    !isEqual(currentBuiltInsData, newBuiltInsData)
-  ) {
-    console.error(
-      "The newly generated plugin/built-in data does not match the current " +
-        "files. Re-run `npm run build-data`."
-    );
-    process.exit(1);
+    if (!isEqual(currentData, newData)) {
+      console.error(
+        "The newly generated plugin/built-in data does not match the current " +
+          "files. Re-run `npm run build-data`."
+      );
+      process.exit(1);
+    }
+
+    process.exit(0);
   }
 
-  process.exit(0);
-}
-
-fs.writeFileSync(
-  pluginsDataPath,
-  JSON.stringify(newPluginData, null, 2) + "\n"
-);
-
-fs.writeFileSync(
-  builtInsDataPath,
-  JSON.stringify(newBuiltInsData, null, 2) + "\n"
-);
+  fs.writeFileSync(dataPath, `${JSON.stringify(newData, null, 2)}\n`);
+});

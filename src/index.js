@@ -13,6 +13,21 @@ import getTargets from "./targets-parser";
 import { prettifyTargets, semverify } from "./utils";
 import type { Plugin, Targets } from "./types";
 
+const STAGE3_PLUGINS = new Set([
+  "transform-async-generator-functions",
+  "transform-object-rest-spread",
+  "transform-unicode-property-regex",
+]);
+
+const pluginListWithoutStage3 = Object.keys(
+  pluginList,
+).reduce((result, plugin) => {
+  if (!STAGE3_PLUGINS.has(plugin)) {
+    result[plugin] = pluginList[plugin];
+  }
+  return result;
+}, {});
+
 export const isPluginRequired = (
   supportedEnvironments: Targets,
   plugin: Targets,
@@ -115,6 +130,7 @@ export default function buildPreset(
     loose,
     modules,
     spec,
+    stage3,
     targets: optionsTargets,
     useBuiltIns,
   } = normalizeOptions(opts);
@@ -137,9 +153,10 @@ export default function buildPreset(
   const exclude = transformIncludesAndExcludes(optionsExclude);
 
   const transformTargets = forceAllTransforms || hasUglifyTarget ? {} : targets;
+  const transformPlugins = stage3 ? pluginList : pluginListWithoutStage3;
 
   const transformations = filterItems(
-    pluginList,
+    transformPlugins,
     include.plugins,
     exclude.plugins,
     transformTargets,
@@ -161,6 +178,7 @@ export default function buildPreset(
   }
 
   const plugins = [];
+  const pluginUseBuiltIns = useBuiltIns !== false;
 
   if (modules !== false && moduleTransformations[modules]) {
     plugins.push([
@@ -172,7 +190,10 @@ export default function buildPreset(
   // NOTE: not giving spec here yet to avoid compatibility issues when
   // babel-plugin-transform-es2015-modules-commonjs gets its spec mode
   transformations.forEach(pluginName =>
-    plugins.push([require(`babel-plugin-${pluginName}`), { spec, loose }]),
+    plugins.push([
+      require(`babel-plugin-${pluginName}`),
+      { spec, loose, useBuiltIns: pluginUseBuiltIns },
+    ]),
   );
 
   const regenerator = transformations.has("transform-regenerator");
