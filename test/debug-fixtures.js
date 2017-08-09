@@ -32,7 +32,7 @@ const testOutputType = (type, stdTarg, opts) => {
   } else {
     const file = path.join(opts.testLoc, `${type}.txt`);
     console.log(`New test file created: ${file}`);
-    fs.outputFileSync(file, stdTarg);
+    fs.outputFileSync(file, `${stdTarg}\n`);
   }
 };
 
