@@ -53,6 +53,11 @@ const es2015 = {
       "function \"name\" property",
     ]
   },
+  "transform-es2015-instanceof": {
+    features: [
+      "instanceof on Symbol"
+    ]
+  },
   "transform-es2015-literals": {
     features: [
       "Unicode code point escapes",

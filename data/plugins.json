@@ -99,6 +99,7 @@
     "opera": "38",
     "electron": "1.2"
   },
+  "transform-es2015-instanceof": {},
   "transform-es2015-literals": {
     "chrome": "44",
     "edge": "12",
